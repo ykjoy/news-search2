@@ -21,13 +21,13 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-st.title("📰 AI 최신 뉴스 검색 && 자동 저장기")
+st.title("📰 AI 최신 뉴스 검색 & 자동 저장기")
 st.markdown("키워드를 검색하면 Gemini가 구글 검색을 통해 가장 최신 뉴스 2건을 요약하고 DB에 자동 저장합니다.")
 
 # ----------------------------------------------------
-# 화면 탭 구성
+# 화면 탭 구성 (Tab 3 제외)
 # ----------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["🔍 검색하기", "💾 저장된 뉴스 보기", "📊 통계 분석"])
+tab1, tab2 = st.tabs(["🔍 검색하기", "💾 저장된 뉴스 보기"])
 
 # ==========================================
 # Tab 1: 검색 및 저장 로직
@@ -78,41 +78,33 @@ with tab1:
                     # [매우 중요] URL 환각 완벽 방지 로직 (Grounding Metadata 활용)
                     # ----------------------------------------------------
                     real_links = {}
-                    # response의 grounding_metadata에서 실제 구글 검색이 참조한 정보 추출
                     if hasattr(response, 'candidates') and response.candidates:
                         grounding_metadata = response.candidates[0].grounding_metadata
                         if grounding_metadata and grounding_metadata.grounding_chunks:
                             for chunk in grounding_metadata.grounding_chunks:
                                 if hasattr(chunk, 'web') and chunk.web:
-                                    # 실제 구글 검색된 기사 제목과 URL 맵핑
                                     real_links[chunk.web.title] = chunk.web.uri
                     
-                    # 생성된 JSON 데이터의 URL을 실제 URL로 덮어쓰기 검증
                     for item in news_data:
                         for real_title, real_url in real_links.items():
-                            # 제목이 일부라도 일치하면 (LLM이 제목을 줄였을 수 있으므로) 실제 URL 할당
                             if item['title'].lower() in real_title.lower() or real_title.lower() in item['title'].lower():
-                                #[수정 완료] 구글 내부 임시 링크(grounding-api-redirect)가 아니고 정상적인 http 링크일 때만 덮어쓰기
                                 if real_url.startswith("http") and "grounding-api-redirect" not in real_url:
                                     item['url'] = real_url
                                 break
                     # ----------------------------------------------------
                     
-                    # 화면에 출력 및 DB 저장 처리
                     saved_count = 0
                     skipped_count = 0
                     
                     st.success("✨ 검색이 완료되었습니다!")
                     
                     for idx, item in enumerate(news_data):
-                        # 카드 형태로 화면 출력
                         with st.container():
                             st.markdown(f"### {idx+1}. [{item['title']}]({item['url']})")
                             st.caption(f"출처: {item['source']} | 날짜: {item['news_date']}")
                             st.write(f"**요약:** {item['summary']}")
                             st.divider()
                         
-                        # Supabase DB 저장
                         try:
                             db_data = {
                                 "keyword": keyword,
@@ -125,7 +117,6 @@ with tab1:
                             supabase.table("news_history").insert(db_data).execute()
                             saved_count += 1
                         except Exception as e:
-                            # 23505는 PostgreSQL의 Unique Violation 에러 코드
                             if '23505' in str(e) or 'duplicate key' in str(e).lower():
                                 skipped_count += 1
                             else:
@@ -177,28 +168,3 @@ with tab2:
         )
     else:
         st.info("아직 저장된 뉴스가 없습니다. 탭 1에서 뉴스를 검색해 보세요!")
-
-# ==========================================
-# Tab 3: 통계 대시보드
-# ==========================================
-with tab3:
-    st.subheader("📊 뉴스 수집 통계")
-    
-    if data: # Tab 2에서 불러온 데이터 재활용
-        stat_df = pd.DataFrame(data)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("##### 📌 키워드별 누적 수집 건수")
-            keyword_counts = stat_df['keyword'].value_counts()
-            st.bar_chart(keyword_counts)
-            
-        with col2:
-            st.markdown("##### 📅 일자별 뉴스 저장 건수")
-            # created_at에서 YYYY-MM-DD 만 추출
-            stat_df['date_only'] = pd.to_datetime(stat_df['created_at']).dt.strftime('%Y-%m-%d')
-            date_counts = stat_df['date_only'].value_counts().sort_index()
-            st.line_chart(date_counts)
-    else:
-        st.info("통계를 표시할 데이터가 부족합니다.")
