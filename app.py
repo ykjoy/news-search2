@@ -53,6 +53,7 @@ from llama_index.core import (
 # --- Gemini API와 LlamaIndex를 연결하는 어댑터 ---
 from llama_index.llms.google_genai import GoogleGenAI            # Gemini를 LLM(답변 생성용)으로 쓰기 위한 어댑터
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding  # Gemini를 임베딩(텍스트→벡터)으로 쓰기 위한 어댑터
+from google.genai.types import EmbedContentConfig                # 임베딩 모델 세부 설정(차원 수 등)
 
 # --- Supabase pgvector와 LlamaIndex를 연결하는 어댑터 ---
 from llama_index.vector_stores.supabase import SupabaseVectorStore
@@ -152,8 +153,10 @@ def init_llama_index():
        - "휴학"과 "학업 중단"은 글자는 다르지만 벡터가 매우 비슷함
        - 그래서 글자가 달라도 의미로 검색할 수 있게 됨!
        
-       text-embedding-004는 Google이 만든 임베딩 모델로,
-       텍스트를 768차원 벡터로 변환합니다.
+       gemini-embedding-001은 Google이 만든 최신 임베딩 모델로,
+       기본은 3072차원이지만 768차원으로 축소해서 사용합니다.
+       (Matryoshka Representation Learning이라는 기술 덕분에
+        차원을 줄여도 성능 손실이 거의 없음)
     """
     # LLM: 답변을 생성하는 AI (gemini-2.5-flash — 빠르고 무료)
     Settings.llm = GoogleGenAI(
@@ -163,9 +166,15 @@ def init_llama_index():
                           # 사업보고서는 정확성이 중요하니 0.1로 낮게 설정
     )
     # 임베딩 모델: 텍스트를 768차원 벡터로 변환
+    # ⚠️ 참고: text-embedding-004는 2026년 1월 deprecated되어 더 이상 사용 불가
+    # 현재는 gemini-embedding-001을 사용 (기본 3072차원, output_dimensionality로 축소 가능)
+    # 우리는 Supabase 테이블이 VECTOR(768)이므로 768차원으로 출력하도록 설정
     Settings.embed_model = GoogleGenAIEmbedding(
-        model_name="text-embedding-004",
+        model_name="gemini-embedding-001",
         api_key=GEMINI_API_KEY,
+        embedding_config=EmbedContentConfig(
+            output_dimensionality=768  # 3072 → 768로 축소 (Matryoshka)
+        ),
     )
     # 청크(chunk) 크기 설정
     # 📝 청크란?
@@ -197,7 +206,7 @@ def get_vector_store(company_name: str):
         postgres_connection_string=SUPABASE_DB_CONNECTION,
         # 회사명을 collection 이름으로 사용 (공백→_, 소문자로 변환)
         collection_name=company_name.replace(" ", "_").lower(),
-        dimension=768,  # 임베딩 차원 수 (Gemini text-embedding-004는 768차원)
+        dimension=768,  # 임베딩 차원 수 (gemini-embedding-001을 768로 축소해서 사용)
     )
 
 
