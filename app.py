@@ -51,11 +51,14 @@ from llama_index.core import (
 )
 
 # --- Gemini API와 LlamaIndex를 연결하는 어댑터 ---
-from llama_index.llms.google_genai import GoogleGenAI            # Gemini를 LLM(답변 생성용)으로 쓰기 위한 어댑터
-from llama_index.embeddings.google_genai import GoogleGenAIEmbedding  # Gemini를 임베딩(텍스트→벡터)으로 쓰기 위한 어댑터
+#from llama_index.llms.google_genai import GoogleGenAI            # Gemini를 LLM(답변 생성용)으로 쓰기 위한 어댑터
+#from llama_index.embeddings.google_genai import GoogleGenAIEmbedding  # Gemini를 임베딩(텍스트→벡터)으로 쓰기 위한 어댑터
+#from google.genai.types import EmbedContentConfig                # 임베딩 모델 세부 설정(차원 수 등)
+
 #from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
-from google.genai.types import EmbedContentConfig                # 임베딩 모델 세부 설정(차원 수 등)
+from llama_index.llms.gemini import Gemini            
+from llama_index.embeddings.gemini import GeminiEmbedding 
 
 # --- Supabase pgvector와 LlamaIndex를 연결하는 어댑터 ---
 from llama_index.vector_stores.supabase import SupabaseVectorStore
@@ -447,7 +450,10 @@ with tab2:
                         # 각 청크의 metadata에서 페이지 번호와 텍스트 일부를 가져옴
                         sources = []
                         for node in response.source_nodes:
-                            page = node.metadata.get("page_label", "?")
+                            # 'page_label'을 먼저 찾고, 없으면 PyMuPDF 전용인 'page'를 찾음
+                            # page = node.metadata.get("page_label", "?")
+                            page = node.metadata.get("page_label") or node.metadata.get("page", "?")
+
                             # 청크 텍스트 앞 100자만 미리보기로 표시
                             sources.append(
                                 f"페이지 {page}: {node.text[:100]}..."
