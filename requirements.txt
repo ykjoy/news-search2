@@ -9,3 +9,5 @@ vecs
 pypdf
 pandas
 llama-index-embeddings-huggingface
+psutil
+torchvision
