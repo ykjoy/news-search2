@@ -332,8 +332,16 @@ with tab1:
                         # -----------------------------------------------------
                         # 메타데이터 = "데이터에 대한 데이터" (책의 표지 정보 같은 것)
                         # 나중에 검색 결과에서 "어느 회사 보고서에서 찾았는지" 알 수 있게 함
-                        for doc in documents:
+                        #for doc in documents:
+                        #    doc.metadata["company"] = company_name
+
+                        for i, doc in enumerate(documents):
+                            # 회사명 메타데이터 저장 (DB의 metadata 칸에 쏙 들어갑니다)
                             doc.metadata["company"] = company_name
+                            
+                            # 만약 PyMuPDF가 페이지 번호를 놓쳤다면, 우리가 강제로 1, 2, 3... 페이지를 붙여줍니다!
+                            if "page" not in doc.metadata and "page_label" not in doc.metadata:
+                                doc.metadata["page"] = str(i + 1)
 
                         # -----------------------------------------------------
                         # 단계 4: 벡터 스토어 + 인덱스 생성 (핵심!)
@@ -452,8 +460,8 @@ with tab2:
                         sources = []
                         for node in response.source_nodes:
                             # 'page_label'을 먼저 찾고, 없으면 PyMuPDF 전용인 'page'를 찾음
-                            # page = node.metadata.get("page_label", "?")
-                            page = node.metadata.get("page_label") or node.metadata.get("page", "?")
+                            page = node.metadata.get("page_label", "?")
+                            ####page = node.metadata.get("page_label") or node.metadata.get("page", "?")
 
                             # 청크 텍스트 앞 100자만 미리보기로 표시
                             sources.append(
