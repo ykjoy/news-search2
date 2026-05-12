@@ -200,7 +200,7 @@ def init_llama_index():
 
 
 @st.cache_resource
-def get_vector_store(company_name: str):
+def get_vector_store()   #(company_name: str):
     """
     Supabase pgvector에 연결된 LlamaIndex 벡터 스토어를 반환합니다.
     
@@ -217,8 +217,9 @@ def get_vector_store(company_name: str):
     return SupabaseVectorStore(
         postgres_connection_string=SUPABASE_DB_CONNECTION,
         # 회사명을 collection 이름으로 사용 (공백→_, 소문자로 변환)
-        collection_name=company_name.replace(" ", "_").lower(),
-        dimension=768,  # 임베딩 차원 수 (gemini-embedding-001을 768로 축소해서 사용)
+        # collection_name=company_name.replace(" ", "_").lower(),
+        collection_name="business_reports",
+        ddimension=768,  # 임베딩 차원 수 (gemini-embedding-001을 768로 축소해서 사용)
     )
 
 
@@ -342,7 +343,7 @@ with tab1:
                         # 2) 각 청크를 Gemini로 임베딩하고 (768차원 벡터)
                         # 3) Supabase pgvector에 저장
                         # 위 세 작업이 from_documents() 한 번에 자동으로 일어나요!
-                        vector_store = get_vector_store(company_name)
+                        vector_store = get_vector_store()    # (company_name)
                         storage_context = StorageContext.from_defaults(
                             vector_store=vector_store
                         )
