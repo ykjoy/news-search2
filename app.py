@@ -55,8 +55,6 @@ from llama_index.llms.google_genai import GoogleGenAI            # Gemini를 LLM
 #from llama_index.embeddings.google_genai import GoogleGenAIEmbedding  # Gemini를 임베딩(텍스트→벡터)으로 쓰기 위한 어댑터
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
-
-Settings.embed_model = HuggingFaceEmbedding(model_name="jhgan/ko-sroberta-multitask")
 from google.genai.types import EmbedContentConfig                # 임베딩 모델 세부 설정(차원 수 등)
 
 # --- Supabase pgvector와 LlamaIndex를 연결하는 어댑터 ---
