@@ -8,4 +8,4 @@ llama-index-readers-web
 vecs
 pypdf
 pandas
-HuggingFaceEmbedding
+llama-index-embeddings-huggingface
