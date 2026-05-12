@@ -460,7 +460,7 @@ with tab2:
                         sources = []
                         for node in response.source_nodes:
                             # 'page_label'을 먼저 찾고, 없으면 PyMuPDF 전용인 'page'를 찾음
-                            page = node.metadata.get("page_label", "?")
+                            page = node.metadata.get("page", "?")
                             ####page = node.metadata.get("page_label") or node.metadata.get("page", "?")
 
                             # 청크 텍스트 앞 100자만 미리보기로 표시
