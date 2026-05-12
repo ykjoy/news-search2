@@ -179,10 +179,11 @@ def init_llama_index():
     #    ),
     #)
 
-   # [수정된 부분] 
-   # 임베딩(숫자 변환)은 무료 오픈소스 모델을 사용하여 API 한도 초과(429 에러) 완벽 방지!
-   # jhgan/ko-sroberta-multitask 모델은 한국어 처리에 매우 뛰어나며 무료입니다.
-   Settings.embed_model = HuggingFaceEmbedding(model_name="jhgan/ko-sroberta-multitask")
+    # [수정된 부분] 
+    # 임베딩(숫자 변환)은 무료 오픈소스 모델을 사용하여 API 한도 초과(429 에러) 완벽 방지!
+    # jhgan/ko-sroberta-multitask 모델은 한국어 처리에 매우 뛰어나며 무료입니다.
+
+    Settings.embed_model = HuggingFaceEmbedding(model_name="jhgan/ko-sroberta-multitask")
 
     # 청크(chunk) 크기 설정
     # 📝 청크란?
